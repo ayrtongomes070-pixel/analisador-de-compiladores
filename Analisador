@@ -1,0 +1,120 @@
+#include <stdio.h>
+#include <setjmp.h>
+#include "analisador.h"
+
+static int simbolo_lido;
+static int *tokens;
+static int pos;
+static jmp_buf jbuf;
+static int nivel = 0;
+
+int rastreio = 0;
+
+char *nome(int t) {
+    if (t == IDENT)     return "IDENT";
+    if (t == NUMERO)    return "NUMERO";
+    if (t == MAIS)      return "+";
+    if (t == MULT)      return "*";
+    if (t == POTENCIA)  return "**";
+    if (t == ABRE_PAR)  return "(";
+    if (t == FECHA_PAR) return ")";
+    if (t == FIM)       return "FIM";
+    return "?";
+}
+
+void mostra(char *txt) {
+    int i;
+    if (!rastreio) return;
+    for (i = 0; i < nivel; i++) printf("  ");
+    printf("%s\n", txt);
+}
+
+void obtenha_simbolo(void) {
+    simbolo_lido = tokens[pos];
+    if (tokens[pos] != FIM) pos++;
+}
+
+void erro(const char *msg) {
+    printf("ERRO: %s (simbolo = %s)\n", msg, nome(simbolo_lido));
+    longjmp(jbuf, 1);
+}
+
+void expr(void) {
+    nivel++;
+    mostra("EXPR");
+    termo();
+    if (simbolo_lido == MAIS) {
+        obtenha_simbolo();
+        expr();
+    }
+    nivel--;
+}
+
+void termo(void) {
+    nivel++;
+    mostra("TERMO");
+    fator();
+    if (simbolo_lido == MULT) {
+        obtenha_simbolo();
+        termo();
+    }
+    nivel--;
+}
+
+void fator(void) {
+    nivel++;
+    mostra("FATOR");
+    primario();
+    if (simbolo_lido == POTENCIA) {
+        obtenha_simbolo();
+        fator();
+    }
+    nivel--;
+}
+
+void primario(void) {
+    nivel++;
+    if (simbolo_lido == IDENT) {
+        mostra("PRIMARIO -> IDENT");
+        obtenha_simbolo();
+    } else if (simbolo_lido == NUMERO) {
+        mostra("PRIMARIO -> NUMERO");
+        obtenha_simbolo();
+    } else if (simbolo_lido == ABRE_PAR) {
+        mostra("PRIMARIO -> (");
+        obtenha_simbolo();
+        expr();
+        if (simbolo_lido != FECHA_PAR) {
+            nivel--;
+            erro("falta ')'");
+        }
+        mostra("PRIMARIO -> )");
+        obtenha_simbolo();
+    } else {
+        nivel--;
+        erro("primario invalido");
+        return;
+    }
+    nivel--;
+}
+
+int analisa(int *entrada) {
+    tokens = entrada;
+    pos = 0;
+    nivel = 0;
+
+    if (setjmp(jbuf) != 0) {
+        return 0;
+    }
+
+    obtenha_simbolo();
+    expr();
+
+    if (simbolo_lido == FIM) {
+        mostra("EXPRESSAO VALIDA");
+        return 1;
+    }
+
+    erro("simbolo inesperado");
+    return 0;
+}
