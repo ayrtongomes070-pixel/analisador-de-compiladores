@@ -3,15 +3,20 @@
 
 #include "tokens.h"
 
-extern int rastreio;
+#define MAX_ENTRADA 256
 
-int analisa(int *entrada);
+extern int rastreio;
+extern char entrada[MAX_ENTRADA];
+extern int simbolo;
+
+int analisa(char *linha);
 
 void expr(void);
 void termo(void);
 void fator(void);
 void primario(void);
 
+void proximo_token(void);
 void obtenha_simbolo(void);
 void erro(const char *msg);
 void mostra(char *txt);

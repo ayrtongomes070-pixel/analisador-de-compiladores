@@ -1,13 +1,16 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-#define IDENT 
-#define NUMERO
-#define MAIS
-#define MULT
-#define POTENCIA 
-#define ABRE_PAR
-#define FECHA_PAR
-#define FIM
+enum {
+    IDENT,
+    NUMERO,
+    MAIS,
+    MULT,
+    POTENCIA,
+    ABRE_PAR,
+    FECHA_PAR,
+    FIM,
+    ERRO_LEX
+};
 
 #endif
